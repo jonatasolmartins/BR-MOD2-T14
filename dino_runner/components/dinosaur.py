@@ -2,9 +2,13 @@ import pygame
 from pygame.sprite import Sprite
 
 
-from dino_runner.utils.constants import RUNNING, JUMPING, DUCKING
+from dino_runner.utils.constants import RUNNING,RUNNING_SHIELD, JUMPING, JUMPING_SHIELD,DUCKING, DUCKING_SHIELD, DEFAULT_TYPE, SHIELD_TYPE
 
-RUN_IMG = [RUNNING[0], RUNNING[1]]
+
+RUN_IMG = {DEFAULT_TYPE: RUNNING, SHIELD_TYPE: RUNNING_SHIELD}
+JUMP_IMG = {DEFAULT_TYPE: JUMPING, SHIELD_TYPE: JUMPING_SHIELD}
+DUCK_IMG = {DEFAULT_TYPE: DUCKING, SHIELD_TYPE: DUCKING_SHIELD}
+
 X_POS = 80
 Y_POS = 310
 JUMP_VEL = 8.5
@@ -12,6 +16,7 @@ Y_POS_DUCK = 340
 
 class Dinosaur(Sprite):
     def __init__(self):
+        self.image_type = DEFAULT_TYPE
         self.image = RUNNING[0]
         self.dino_rect = self.image.get_rect()
         self.dino_rect.x = 0
@@ -21,6 +26,13 @@ class Dinosaur(Sprite):
         self.jump: bool = False
         self.jump_vel = JUMP_VEL
         self.dino_duck = False
+        self.setup_state()
+
+    def setup_state(self):
+        self.has_power_up = False
+        self.shield = False
+        self.show_text = False
+        self.shield_time_up = 0
 
     def update(self, user_input):
 
@@ -49,9 +61,9 @@ class Dinosaur(Sprite):
     
     def run(self):
         if self.step_index < 5:
-            self.image = RUN_IMG[0]
+            self.image = RUN_IMG[self.image_type][0]
         else:
-            self.image = RUN_IMG[1]
+            self.image = RUN_IMG[self.image_type][1]
 
         self.dino_rect = self.image.get_rect()
         self.dino_rect.x = X_POS
@@ -60,7 +72,7 @@ class Dinosaur(Sprite):
         self.step_index += 1
 
     def dino_jump(self):
-        self.image = JUMPING
+        self.image = JUMP_IMG[self.image_type]
         self.dino_rect.y -= self.jump_vel * 4
         self.jump_vel -= 0.8
 
@@ -72,7 +84,7 @@ class Dinosaur(Sprite):
             # self.jump_vel += 1
           
     def duck(self):
-        self.image = DUCKING[self.step_index // 5]
+        self.image = DUCK_IMG[self.image_type][self.step_index // 5]
         self.dino_rect = self.image.get_rect()
         self.dino_rect.x = X_POS
         self.dino_rect.y = Y_POS_DUCK

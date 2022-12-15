@@ -3,6 +3,7 @@ import pygame
 from dino_runner.utils.constants import BG, ICON, SCREEN_HEIGHT, SCREEN_WIDTH, TITLE, FPS, DEFAULT_TYPE
 from dino_runner.components.dinosaur import Dinosaur
 from dino_runner.components.obstacles.obstacle_manager import Obstacle_Manager
+from dino_runner.components.powerups.power_up_manager import Power_Up_Manager
 from dino_runner.utils.text_utils import draw_message_component
 
 FONT_COLOR = (0,0,0)
@@ -25,7 +26,7 @@ class Game:
         self.y_pos_bg = 380
         self.player = Dinosaur()
         self.obstacle_manager = Obstacle_Manager()
-        #powerupmanager
+        self.power_up_manager = Power_Up_Manager()
 
     def execute(self):
         self.running = True
@@ -41,7 +42,10 @@ class Game:
     def run(self):
         # Game loop: events - update - draw
         self.playing = True
-       
+        self.power_up_manager.reset_powerups()
+        self.obstacle_manager.reset_obstacles()
+        self.game_speed = 20
+        self.score = 0
         while self.playing:
             self.events()
             self.update()
@@ -56,8 +60,9 @@ class Game:
     def update(self):
         user_input = pygame.key.get_pressed()
         self.player.update(user_input)
-        self.update_score()
         self.obstacle_manager.update(self)
+        self.update_score()
+        self.power_up_manager.update(self.score, self.game_speed, self.player)
 
     def update_score(self):
         self.score += 1
@@ -74,6 +79,8 @@ class Game:
         self.player.draw(self.screen)
         self.obstacle_manager.draw(self.screen)
         self.draw_score()
+        self.draw_power_up_time()
+        self.power_up_manager.draw(self.screen)
         pygame.display.update()
         pygame.display.flip()
 
@@ -87,23 +94,23 @@ class Game:
         self.x_pos_bg -= self.game_speed
 
     def draw_score(self):
-        self.draw_message_component(
+        draw_message_component(
             f"Score: {self.score}",self.screen, pos_y_center = 50,pos_x_center=SCREEN_WIDTH - 140)
-
-    def draw_message_component(
-        self, message, screen,
-        font_color= FONT_COLOR,
-        font_size = FONT_SIZE,
-        font_style = FONT_STYLE,
-        pos_y_center = SCREEN_HEIGHT // 2,
-        pos_x_center = SCREEN_WIDTH // 2):
-
-        font = pygame.font.Font(font_style, font_size)
-        text = font.render(message, True, font_color)
-        text_rect = text.get_rect()
-        text_rect.x = pos_x_center
-        text_rect.y = pos_y_center
-        screen.blit(text, text_rect)
+    
+    def draw_power_up_time(self):
+        if self.player.has_power_up:
+            time_to_show = round((self.player.shield_time_up - pygame.time.get_ticks()) / 1000, 2)
+            if time_to_show >= 0:
+                draw_message_component(
+                    f"{self.player.image_type.capitalize()} enabled for {time_to_show} seconds",
+                    self.screen,
+                    font_size = 18,
+                    pos_x_center = 500,
+                    pos_y_center = 40
+                )
+            else:
+                self.player.has_power_up = False
+                self.player.image_type = DEFAULT_TYPE
 
     def handle_events_on_menu(self):
         for event in pygame.event.get():

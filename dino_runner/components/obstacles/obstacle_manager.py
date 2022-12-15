@@ -19,8 +19,9 @@ class Obstacle_Manager:
         for obstacle in self.obstacles:
             obstacle.update(game.game_speed, self.obstacles)
             if game.player.dino_rect.colliderect(obstacle.rect):
-                game.playing = False
-                game.death_count += 1
+                if not game.player.has_power_up:
+                    game.playing = False
+                    game.death_count += 1
                 self.obstacles.remove(obstacle)
         
     def draw(self, screen):
